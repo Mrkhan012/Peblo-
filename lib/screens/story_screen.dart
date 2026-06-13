@@ -110,18 +110,35 @@ class _StoryScreenState extends State<StoryScreen>
     }
 
     if (isCompleted) {
+      final currentQuiz = storyProvider.currentQuiz;
+      if (currentQuiz == null) {
+        return _buildAllQuizzesDoneUI();
+      }
       return Column(
         key: const ValueKey('quiz_view'),
         children: [
           _buildHeaderRow(mood),
-          const SizedBox(height: 30),
+          const SizedBox(height: 20),
+          _buildQuizProgress(storyProvider),
+          const SizedBox(height: 20),
           _buildSuccessMessage(quizProvider),
-          const SizedBox(height: 30),
+          const SizedBox(height: 20),
           QuizCard(
-            question: storyProvider.quiz!,
+            key: ValueKey('quiz_${currentQuiz.id}'),
+            question: currentQuiz,
             provider: quizProvider,
             onCorrect: _onCorrectAnswer,
+            onWrong: () {
+              if (!quizProvider.voicePlayed) {
+                storyProvider.tts.speakFeedback(false);
+                quizProvider.markVoicePlayed();
+              }
+            },
           ),
+          if (quizProvider.isCorrect) ...[
+            const SizedBox(height: 24),
+            _buildNextButton(storyProvider, quizProvider),
+          ],
         ],
       );
     }
@@ -260,9 +277,34 @@ class _StoryScreenState extends State<StoryScreen>
       );
     }
 
-    return ElevatedButton(
-      onPressed: storyProvider.playStory,
-      child: const Text('Read Me a Story'),
+    return Column(
+      children: [
+        ElevatedButton(
+          onPressed: storyProvider.playStory,
+          child: const Text('Read Me a Story'),
+        ),
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          onPressed: storyProvider.skipToQuiz,
+          icon: const Icon(Icons.skip_next_rounded, size: 20),
+          label: const Text('Skip to Quiz'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.primary,
+            side: BorderSide(
+              color: AppColors.primary.withValues(alpha: 0.4),
+              width: 1.6,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            textStyle: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -296,12 +338,20 @@ class _StoryScreenState extends State<StoryScreen>
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         const SizedBox(height: 24),
-        ElevatedButton(
-          onPressed: () {
-            Provider.of<StoryProvider>(context, listen: false).retry();
-          },
-          child: const Text('Try Again'),
-        ),
+        if (message?.contains('TTS') == true || message?.contains('engine') == true)
+          OutlinedButton(
+            onPressed: () {
+              Provider.of<StoryProvider>(context, listen: false).skipToQuiz();
+            },
+            child: const Text('Skip to Quiz'),
+          )
+        else
+          ElevatedButton(
+            onPressed: () {
+              Provider.of<StoryProvider>(context, listen: false).retry();
+            },
+            child: const Text('Try Again'),
+          ),
       ],
     );
   }
@@ -311,9 +361,190 @@ class _StoryScreenState extends State<StoryScreen>
     setState(() {});
     _confetti.play();
 
+    final storyProvider = Provider.of<StoryProvider>(context, listen: false);
+    final quizProvider = Provider.of<QuizProvider>(context, listen: false);
+    if (!quizProvider.voicePlayed) {
+      storyProvider.tts.speakFeedback(true);
+      quizProvider.markVoicePlayed();
+    }
+
     Future.delayed(const Duration(seconds: 2), () {
       _showConfetti = false;
       setState(() {});
     });
+  }
+
+  Widget _buildQuizProgress(StoryProvider storyProvider) {
+    final total = storyProvider.quizzes.length;
+    final current = storyProvider.currentQuizIndex + 1;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        for (int i = 0; i < total; i++) ...[
+          Container(
+            width: i + 1 <= current ? 28 : 12,
+            height: 12,
+            decoration: BoxDecoration(
+              color: i + 1 <= current
+                  ? AppColors.primary
+                  : AppColors.primary.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(6),
+            ),
+          ),
+          if (i != total - 1) const SizedBox(width: 6),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildNextButton(
+      StoryProvider storyProvider, QuizProvider quizProvider) {
+    final hasMore = storyProvider.hasMoreQuizzes;
+    return ElevatedButton(
+      onPressed: () {
+        if (hasMore) {
+          storyProvider.moveToNextQuiz();
+          quizProvider.resetForNewQuestion();
+        } else {
+          storyProvider.moveToNextQuiz();
+        }
+      },
+      child: Text(hasMore ? 'Next Question' : 'Finish'),
+    );
+  }
+
+  Widget _buildAllQuizzesDoneUI() {
+    final quizProvider = Provider.of<QuizProvider>(context);
+    final total = Provider.of<StoryProvider>(context).quizzes.length;
+    final correct = quizProvider.correctCount;
+    final firstTry = quizProvider.firstTryCount;
+    final score = total > 0 ? ((correct / total) * 100).round() : 0;
+    final stars = score >= 80 ? 3 : (score >= 50 ? 2 : 1);
+    String title;
+    String subtitle;
+    if (score == 100) {
+      title = 'Perfect score!';
+      subtitle = 'You got every question right!';
+    } else if (score >= 80) {
+      title = 'Amazing work!';
+      subtitle = 'Pip is so proud of you!';
+    } else if (score >= 50) {
+      title = 'Good job!';
+      subtitle = 'Keep practicing, you will get there!';
+    } else {
+      title = 'Nice try!';
+      subtitle = 'Listen to the story again and try once more!';
+    }
+
+    return Column(
+      key: const ValueKey('all_done'),
+      children: [
+        _buildHeaderRow(BuddyMood.cheering),
+        const SizedBox(height: 20),
+        Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: AppColors.success.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.emoji_events_rounded,
+            color: AppColors.success,
+            size: 72,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.displayLarge,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          subtitle,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+        const SizedBox(height: 24),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(3, (i) {
+            final filled = i < stars;
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Icon(
+                filled ? Icons.star_rounded : Icons.star_outline_rounded,
+                color: filled ? AppColors.accent : AppColors.inkSoft,
+                size: 44,
+              ),
+            );
+          }),
+        ),
+        const SizedBox(height: 24),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          decoration: BoxDecoration(
+            color: AppColors.cardBg,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppColors.primary.withValues(alpha: 0.12),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              _scoreRow(
+                  'Score', '$score%', AppColors.primary, big: true),
+              const SizedBox(height: 10),
+              _scoreRow('Correct answers', '$correct / $total',
+                  AppColors.success),
+              const SizedBox(height: 6),
+              _scoreRow('First-try wins', '$firstTry / $total',
+                  AppColors.mint),
+            ],
+          ),
+        ),
+        const SizedBox(height: 28),
+        ElevatedButton(
+          onPressed: () {
+            Provider.of<StoryProvider>(context, listen: false).loadInitial();
+            Provider.of<QuizProvider>(context, listen: false).reset();
+          },
+          child: const Text('Play Again'),
+        ),
+      ],
+    );
+  }
+
+  Widget _scoreRow(String label, String value, Color color,
+      {bool big = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: AppColors.inkSoft,
+                fontWeight: FontWeight.w500,
+              ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontFamily: 'Fredoka',
+            fontSize: big ? 28 : 18,
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
+        ),
+      ],
+    );
   }
 }

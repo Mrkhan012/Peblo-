@@ -9,12 +9,14 @@ class QuizCard extends StatelessWidget {
   final QuizQuestion question;
   final QuizProvider provider;
   final VoidCallback? onCorrect;
+  final VoidCallback? onWrong;
 
   const QuizCard({
     super.key,
     required this.question,
     required this.provider,
     this.onCorrect,
+    this.onWrong,
   });
 
   @override
@@ -157,10 +159,14 @@ class QuizCard extends StatelessWidget {
             ? null
             : () {
                 HapticFeedback.lightImpact();
+                final wasCorrect = option == question.answer;
                 provider.submit(option, question.answer);
-                if (option == question.answer) {
+                if (wasCorrect) {
                   HapticFeedback.mediumImpact();
                   onCorrect?.call();
+                } else {
+                  HapticFeedback.heavyImpact();
+                  onWrong?.call();
                 }
               },
         borderRadius: BorderRadius.circular(16),

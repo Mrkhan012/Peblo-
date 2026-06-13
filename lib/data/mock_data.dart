@@ -15,13 +15,36 @@ class MockDataSource {
     );
   }
 
-  static QuizQuestion fetchQuiz() {
-    const quizJson = {
-      "question": "What colour was Pip the Robot's lost gear?",
-      "options": ["Red", "Green", "Blue", "Yellow"],
-      "answer": "Blue",
-    };
+  static List<QuizQuestion> fetchQuizzes() {
+    final quizList = [
+      {
+        "id": "q1",
+        "question": "What colour was Pip the Robot's lost gear?",
+        "options": ["Red", "Green", "Blue", "Yellow"],
+        "answer": "Blue",
+      },
+      {
+        "id": "q2",
+        "question": "Who was Pip's first friend in the Whispering Woods?",
+        "options": ["Hoot the Owl", "Sparkle the Squirrel", "Chipmunk", "A rabbit"],
+        "answer": "Hoot the Owl",
+      },
+      {
+        "id": "q3",
+        "question": "What did the chipmunk want to fix with the gear?",
+        "options": ["Her house", "A tiny burrow bridge", "Her food store", "A tree"],
+        "answer": "A tiny burrow bridge",
+      },
+      {
+        "id": "q4",
+        "question": "Where was Pip known for solving puzzles?",
+        "options": ["Robo City", "Digital Village", "Tech Town", "Metal Mountain"],
+        "answer": "Digital Village",
+      },
+    ];
 
-    return QuizQuestion.fromJson(quizJson);
+    return quizList
+        .map((json) => QuizQuestion.fromJson(Map<String, dynamic>.from(json)))
+        .toList();
   }
 }
