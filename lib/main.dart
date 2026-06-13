@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'providers/story_provider.dart';
+import 'providers/quiz_provider.dart';
 import 'screens/story_screen.dart';
 import 'theme/app_theme.dart';
 
@@ -25,6 +26,7 @@ class PebloApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => StoryProvider()),
+        ChangeNotifierProvider(create: (_) => QuizProvider()),
       ],
       child: MaterialApp(
         title: 'Peblo - AI Story Buddy',

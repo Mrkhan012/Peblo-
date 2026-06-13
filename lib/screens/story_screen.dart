@@ -48,22 +48,19 @@ class _StoryScreenState extends State<StoryScreen>
   }
 
   Widget _buildBody(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => QuizProvider(),
-      child: Stack(
-        children: [
-          _buildMainContent(context),
-          if (_showConfetti)
-            ConfettiWidget(
-              confettiController: _confetti,
-              blastDirection: -1,
-              emissionFrequency: 0.02,
-              numberOfParticles: 50,
-              colors: [AppColors.primary, AppColors.accent, AppColors.mint],
-              gravity: 0.2,
-            ),
-        ],
-      ),
+    return Stack(
+      children: [
+        _buildMainContent(context),
+        if (_showConfetti)
+          ConfettiWidget(
+            confettiController: _confetti,
+            blastDirection: -1,
+            emissionFrequency: 0.02,
+            numberOfParticles: 50,
+            colors: [AppColors.primary, AppColors.accent, AppColors.mint],
+            gravity: 0.2,
+          ),
+      ],
     );
   }
 
