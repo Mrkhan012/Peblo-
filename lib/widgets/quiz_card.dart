@@ -5,19 +5,6 @@ import '../models/quiz_model.dart';
 import '../providers/quiz_provider.dart';
 import '../theme/app_theme.dart';
 
-/// The data-driven quiz card.
-///
-/// This widget knows NOTHING about the number of options, the
-/// question text, or the answer. It receives a [QuizQuestion]
-/// and renders whatever the data says. To support a new question
-/// shape, you change the model — not the widget.
-///
-/// Why a 2-column grid for 4+ options?
-///  - 2 options: 1 column
-///  - 3 options: 1 column (roomy, kid-friendly tap targets)
-///  - 4-6 options: 2 columns — keeps the card compact on small
-///    Android screens, the most common device class in our
-///    target audience.
 class QuizCard extends StatelessWidget {
   final QuizQuestion question;
   final QuizProvider provider;
@@ -32,8 +19,6 @@ class QuizCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Re-render only when this provider's fields change — keeps
-    // parent rebuilds from cascading.
     return AnimatedBuilder(
       animation: provider,
       builder: (context, _) {

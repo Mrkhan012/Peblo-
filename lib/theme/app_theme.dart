@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Peblo brand colors — warm, vibrant, child-friendly palette.
-/// Inspired by the wireframe: deep indigo top, warm cream middle,
-/// sunny yellow accent with playful purple and coral.
 class AppColors {
-  static const Color primary = Color(0xFF6C63FF); // Friendly purple
+  static const Color primary = Color(0xFF6C63FF);
   static const Color primaryDark = Color(0xFF4A40D9);
-  static const Color accent = Color(0xFFFFC857); // Sunny yellow
+  static const Color accent = Color(0xFFFFC857);
   static const Color coral = Color(0xFFFF6B6B);
   static const Color mint = Color(0xFF4ECDC4);
   static const Color skyBlue = Color(0xFF6FC3DF);

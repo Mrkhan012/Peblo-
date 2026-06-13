@@ -2,12 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 
-/// The story-text card with a reusable shake animation.
-///
-/// We expose a [shakeTrigger] counter. When the parent increments
-/// it, the card shakes once. This keeps the AnimationController
-/// scoped to the widget (so other parts of the tree don't rebuild)
-/// and decouples the trigger from any particular story state.
 class StoryCard extends StatefulWidget {
   final String title;
   final String body;
@@ -56,9 +50,6 @@ class _StoryCardState extends State<StoryCard>
     return AnimatedBuilder(
       animation: _shake,
       builder: (context, child) {
-        // Damped sine wave for a satisfying shake.
-        // Amplitude decays as the animation completes; the inner
-        // sin term oscillates so the card wiggles back and forth.
         final t = _shake.value;
         final dx = 14 * (1 - t) * _sine(t * 8);
         return Transform.translate(
@@ -71,8 +62,6 @@ class _StoryCardState extends State<StoryCard>
   }
 
   double _sine(double x) {
-    // Crude sine — values approximately in [-1, 1].
-    // Cheap, no dart:math import needed.
     final xPi = x * 3.141592653589793;
     final xPi2 = xPi * 0.5;
     return (xPi - xPi2 * (xPi2 * xPi2) / 6);

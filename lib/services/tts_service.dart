@@ -1,11 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
-/// TTS service wrapping flutter_tts with a clean async API and
-/// proper completion / error callbacks.
-///
-/// We expose a state enum + callback hooks so the provider layer
-/// can drive UI without leaking flutter_tts-specific types.
 enum TtsStatus { idle, preparing, playing, completed, error }
 
 class TtsService {
@@ -18,8 +13,6 @@ class TtsService {
   TtsStatus get status => _status;
   String? get lastError => _lastError;
 
-  // Callbacks. Decoupled from flutter_tts so the rest of the app
-  // doesn't import this package directly.
   VoidCallback? onStart;
   VoidCallback? onCompletion;
   ValueChanged<String>? onError;
@@ -30,17 +23,13 @@ class TtsService {
     if (_initialized) return;
     try {
       await _tts.awaitSpeakCompletion(true);
-      // Slightly slower, kid-friendly pace.
       await _tts.setSpeechRate(0.42);
       await _tts.setVolume(1.0);
       await _tts.setPitch(1.05);
 
-      // Try a friendly English voice if available; fall back to default.
       try {
         final voices = await _tts.getVoices;
         if (voices is List) {
-          // Coerce each voice map to Map<String, String> as required
-          // by setVoice, and prefer one that sounds kid-friendly.
           Map<String, String>? preferred;
           for (final v in voices) {
             if (v is Map) {
@@ -60,16 +49,14 @@ class TtsService {
                 preferred = coerced;
                 break;
               }
-              preferred ??= coerced; // remember first English voice as fallback
+              preferred ??= coerced;
             }
           }
           if (preferred != null) {
             await _tts.setVoice(preferred);
           }
         }
-      } catch (_) {
-        // Voice selection is best-effort; ignore.
-      }
+      } catch (_) {}
 
       _tts.setStartHandler(() {
         _status = TtsStatus.playing;
@@ -98,8 +85,6 @@ class TtsService {
     }
   }
 
-  /// Begin speaking [text]. Returns once playback is triggered.
-  /// The completion / error callbacks fire asynchronously.
   Future<void> speak(String text) async {
     try {
       _status = TtsStatus.preparing;
@@ -107,7 +92,6 @@ class TtsService {
       await _ensureInitialized();
       await _tts.stop();
       final result = await _tts.speak(text);
-      // On some platforms, `speak` returns 0 on success, 1 on error.
       if (result == 1) {
         _status = TtsStatus.error;
         _lastError = 'TTS engine reported a failure.';
@@ -123,13 +107,13 @@ class TtsService {
   Future<void> stop() async {
     try {
       await _tts.stop();
-    } catch (_) {/* noop */}
+    } catch (_) {}
     _status = TtsStatus.idle;
   }
 
   Future<void> dispose() async {
     try {
       await _tts.stop();
-    } catch (_) {/* noop */}
+    } catch (_) {}
   }
 }

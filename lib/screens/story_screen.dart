@@ -9,16 +9,6 @@ import '../widgets/story_card.dart';
 import '../widgets/quiz_card.dart';
 import '../theme/app_theme.dart';
 
-/// Main screen: story + quiz with state transitions.
-///
-/// The key insight is that StoryProvider and QuizProvider are siblings
-/// in the widget tree. They both listen to the TTS completion callback:
-/// - StoryProvider for "audio finished, now show quiz"
-/// - QuizProvider for tracking user taps, wrong answers, success
-///
-/// We use a ConfettiController for the success animation. The controller
-/// lives in the main screen (so it's not rebuilt when state changes)
-/// but is triggered from the QuizProvider callback.
 class StoryScreen extends StatefulWidget {
   const StoryScreen({super.key});
 
@@ -37,7 +27,6 @@ class _StoryScreenState extends State<StoryScreen>
     _confetti = ConfettiController(
       duration: const Duration(seconds: 2),
     );
-    // Load the story on first mount
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<StoryProvider>(context, listen: false).loadInitial();
     });
@@ -82,7 +71,6 @@ class _StoryScreenState extends State<StoryScreen>
     final storyProvider = Provider.of<StoryProvider>(context);
     final quizProvider = Provider.of<QuizProvider>(context);
 
-    // Buddy mood depends on the current phase
     BuddyMood mood = BuddyMood.idle;
     if (storyProvider.phase == StoryPhase.playing) {
       mood = BuddyMood.listening;
@@ -141,7 +129,6 @@ class _StoryScreenState extends State<StoryScreen>
       );
     }
 
-    // Default: story view
     return Column(
       key: const ValueKey('story_view'),
       children: [
@@ -210,11 +197,13 @@ class _StoryScreenState extends State<StoryScreen>
               size: 24,
             ),
             const SizedBox(width: 12),
-            Text(
-              'Amazing! You got it!',
-              style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                    color: AppColors.success,
-                  ),
+            Expanded(
+              child: Text(
+                'Amazing! You got it!',
+                style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                      color: AppColors.success,
+                    ),
+              ),
             ),
           ],
         ),
@@ -236,11 +225,13 @@ class _StoryScreenState extends State<StoryScreen>
               size: 24,
             ),
             const SizedBox(width: 12),
-            Text(
-              'Try again, you can do it!',
-              style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                    color: AppColors.error,
-                  ),
+            Expanded(
+              child: Text(
+                'Try again, you can do it!',
+                style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                      color: AppColors.error,
+                    ),
+              ),
             ),
           ],
         ),
@@ -319,12 +310,10 @@ class _StoryScreenState extends State<StoryScreen>
   }
 
   void _onCorrectAnswer() {
-    // Trigger confetti when quiz is solved successfully.
     _showConfetti = true;
     setState(() {});
     _confetti.play();
 
-    // Hide confetti after the animation completes
     Future.delayed(const Duration(seconds: 2), () {
       _showConfetti = false;
       setState(() {});

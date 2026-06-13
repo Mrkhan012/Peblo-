@@ -2,20 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 
-/// Buddy mood — drives the face and the floating animation.
 enum BuddyMood { idle, listening, happy, cheering, sad }
 
-/// A cute, hand-drawn style AI buddy built entirely with
-/// Flutter primitives — no external assets needed.
-///
-/// The widget is intentionally lightweight:
-///   - one CustomPainter for the body (cheap, no raster)
-///   - one AnimationController for the float/bounce (rebuilt only
-///     inside the widget, so other widgets don't repaint)
-///
-/// Why a custom painter? Bitmap assets balloon APK size and
-/// don't scale crisply on mid-range Android. Pure-vector Custom
-/// Painters paint fast and stay sharp on any device.
 class BuddyWidget extends StatefulWidget {
   final BuddyMood mood;
   final double size;
@@ -84,7 +72,7 @@ class _BuddyWidgetState extends State<BuddyWidget>
     return AnimatedBuilder(
       animation: Listenable.merge([_float, _blink, _cheer]),
       builder: (context, _) {
-        final floatY = -6 + 6 * _float.value; // gentle bob
+        final floatY = -6 + 6 * _float.value;
         final cheerScale = widget.mood == BuddyMood.cheering
             ? 1.0 + 0.08 * _cheer.value
             : 1.0;
@@ -111,7 +99,7 @@ class _BuddyWidgetState extends State<BuddyWidget>
 
 class _BuddyPainter extends CustomPainter {
   final BuddyMood mood;
-  final double blink; // 0..1
+  final double blink;
 
   _BuddyPainter({required this.mood, required this.blink});
 
@@ -121,7 +109,6 @@ class _BuddyPainter extends CustomPainter {
     final h = size.height;
     final center = Offset(w / 2, h / 2);
 
-    // Soft shadow
     final shadow = Paint()
       ..color = Colors.black.withValues(alpha: 0.10)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
@@ -134,7 +121,6 @@ class _BuddyPainter extends CustomPainter {
       shadow,
     );
 
-    // Body — round robot head
     final bodyColor = _bodyColor();
     final bodyRect = Rect.fromCenter(
       center: Offset(center.dx, h * 0.45),
@@ -144,7 +130,6 @@ class _BuddyPainter extends CustomPainter {
     final rrect = RRect.fromRectAndRadius(bodyRect, Radius.circular(w * 0.25));
     canvas.drawRRect(rrect, Paint()..color = bodyColor);
 
-    // Antenna
     final antennaPaint = Paint()
       ..color = AppColors.inkDark
       ..strokeWidth = 3
@@ -160,12 +145,10 @@ class _BuddyPainter extends CustomPainter {
       Paint()..color = AppColors.coral,
     );
 
-    // Cheek blush
     final blush = Paint()..color = AppColors.coral.withValues(alpha: 0.45);
     canvas.drawCircle(Offset(w * 0.27, h * 0.55), 7, blush);
     canvas.drawCircle(Offset(w * 0.73, h * 0.55), 7, blush);
 
-    // Eyes — blink by squashing the height
     final eyePaint = Paint()..color = AppColors.inkDark;
     final eyeY = h * 0.45;
     final eyeHeightClosed = 2.0;
@@ -184,7 +167,6 @@ class _BuddyPainter extends CustomPainter {
     canvas.drawOval(leftEye, eyePaint);
     canvas.drawOval(rightEye, eyePaint);
 
-    // Mouth — varies by mood
     final mouthPaint = Paint()
       ..color = AppColors.inkDark
       ..style = PaintingStyle.stroke
@@ -257,7 +239,6 @@ class _BuddyPainter extends CustomPainter {
         break;
     }
 
-    // Cheer sparkles
     if (mood == BuddyMood.cheering) {
       final sparkle = Paint()..color = AppColors.accent;
       canvas.drawCircle(Offset(w * 0.15, h * 0.25), 4, sparkle);

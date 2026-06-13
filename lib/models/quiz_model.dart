@@ -1,6 +1,3 @@
-/// Data-driven quiz model. The renderer must work for any number
-/// of options (3, 4, 5, ...) without code changes — this model
-/// does NOT hardcode option counts.
 class QuizQuestion {
   final String id;
   final String question;
@@ -14,9 +11,6 @@ class QuizQuestion {
     required this.answer,
   });
 
-  /// Deserialize from backend-shaped JSON.
-  /// The "id" is optional in the wire format — we synthesize one
-  /// for stable keys during animations.
   factory QuizQuestion.fromJson(Map<String, dynamic> json) {
     final rawOptions = json['options'];
     if (rawOptions is! List) {
