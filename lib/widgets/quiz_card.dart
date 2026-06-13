@@ -32,24 +32,30 @@ class QuizCard extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(20, 22, 20, 22),
           decoration: BoxDecoration(
             color: AppColors.cardBg,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.12),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(28),
             border: Border.all(
               color: AppColors.primary.withValues(alpha: 0.08),
+              width: 1.2,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.10),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
+              ),
+              BoxShadow(
+                color: Colors.white.withValues(alpha: 0.6),
+                blurRadius: 12,
+                offset: const Offset(0, -4),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildHeader(context),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
               if (useGrid)
                 _buildGrid(context, options)
               else
@@ -68,20 +74,23 @@ class QuizCard extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppColors.accent.withValues(alpha: 0.35),
-            borderRadius: BorderRadius.circular(10),
+            color: AppColors.accent.withValues(alpha: 0.20),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: const Icon(
-            Icons.psychology_alt_outlined,
-            color: AppColors.primaryDark,
+            Icons.psychology_alt_rounded,
+            color: AppColors.accentDark,
             size: 22,
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
         Expanded(
           child: Text(
             question.question,
-            style: Theme.of(context).textTheme.titleLarge,
+            style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                  fontWeight: FontWeight.w700,
+                  height: 1.3,
+                ),
           ),
         ),
       ],
@@ -132,7 +141,7 @@ class QuizCard extends StatelessWidget {
     final showCorrect = provider.status == QuizStatus.success && isThisCorrect;
 
     Color bg = Colors.white;
-    Color border = AppColors.primary.withValues(alpha: 0.18);
+    Color border = AppColors.primary.withValues(alpha: 0.16);
     Color text = AppColors.inkDark;
     Widget? trailing;
 
@@ -169,31 +178,35 @@ class QuizCard extends StatelessWidget {
                   onWrong?.call();
                 }
               },
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
+          duration: const Duration(milliseconds: 250),
           curve: Curves.easeOut,
           width: fillWidth ? double.infinity : null,
-          padding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
           decoration: BoxDecoration(
             color: bg,
             border: Border.all(color: border, width: 1.6),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: border.withValues(alpha: 0.10),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
           child: Row(
             children: [
               trailing,
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   option,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyLarge
-                      ?.copyWith(
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: text,
                         fontWeight: FontWeight.w600,
+                        fontSize: 15,
                       ),
                 ),
               ),
@@ -213,8 +226,8 @@ class _LetterBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 28,
-      height: 28,
+      width: 32,
+      height: 32,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: AppColors.primary.withValues(alpha: 0.10),
@@ -225,6 +238,7 @@ class _LetterBadge extends StatelessWidget {
         style: Theme.of(context).textTheme.labelLarge!.copyWith(
               color: AppColors.primaryDark,
               fontSize: 14,
+              fontWeight: FontWeight.w700,
             ),
       ),
     );

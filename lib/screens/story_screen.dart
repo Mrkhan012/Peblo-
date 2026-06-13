@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:confetti/confetti.dart';
 
@@ -41,8 +42,11 @@ class _StoryScreenState extends State<StoryScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: _buildBody(context),
+      body: Container(
+        decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
+        child: SafeArea(
+          child: _buildBody(context),
+        ),
       ),
     );
   }
@@ -57,7 +61,12 @@ class _StoryScreenState extends State<StoryScreen>
             blastDirection: -1,
             emissionFrequency: 0.02,
             numberOfParticles: 50,
-            colors: [AppColors.primary, AppColors.accent, AppColors.mint],
+            colors: [
+              AppColors.primary,
+              AppColors.accent,
+              AppColors.mint,
+              AppColors.pink
+            ],
             gravity: 0.2,
           ),
       ],
@@ -147,14 +156,14 @@ class _StoryScreenState extends State<StoryScreen>
       key: const ValueKey('story_view'),
       children: [
         _buildHeaderRow(mood),
-        const SizedBox(height: 30),
+        const SizedBox(height: 24),
         if (storyProvider.story != null)
           StoryCard(
             title: storyProvider.story!.title,
             body: storyProvider.story!.text,
             shakeTrigger: quizProvider.shakeTick,
           ),
-        const SizedBox(height: 40),
+        const SizedBox(height: 32),
         _buildControlRow(storyProvider),
       ],
     );
@@ -164,23 +173,27 @@ class _StoryScreenState extends State<StoryScreen>
     return Row(
       children: [
         SizedBox(
-          width: 180,
-          height: 180,
-          child: BuddyWidget(mood: mood, size: 160),
+          width: 160,
+          height: 160,
+          child: BuddyWidget(mood: mood, size: 140),
         ),
-        const SizedBox(width: 20),
+        const SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'AI Story Buddy',
-                style: Theme.of(context)
-                    .textTheme
-                    .displayLarge!
-                    .copyWith(fontSize: 36),
+              ShaderMask(
+                shaderCallback: (bounds) =>
+                    AppColors.primaryGradient.createShader(bounds),
+                child: Text(
+                  'AI Story Buddy',
+                  style: Theme.of(context)
+                      .textTheme
+                      .displayLarge!
+                      .copyWith(fontSize: 32, color: Colors.white),
+                ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 6),
               Text(
                 'Enjoy a magical story!',
                 style: Theme.of(context).textTheme.bodyLarge,
@@ -192,6 +205,43 @@ class _StoryScreenState extends State<StoryScreen>
     );
   }
 
+  Widget _buildQuizProgress(StoryProvider storyProvider) {
+    final total = storyProvider.quizzes.length;
+    final current = storyProvider.currentQuizIndex + 1;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(total, (i) {
+        final isDone = i < current;
+        final isActive = i == current - 1;
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            width: isActive ? 28 : 14,
+            height: 10,
+            decoration: BoxDecoration(
+              color: isDone
+                  ? AppColors.success
+                  : (isActive
+                      ? AppColors.primary
+                      : AppColors.primary.withValues(alpha: 0.18)),
+              borderRadius: BorderRadius.circular(5),
+              boxShadow: isActive
+                  ? [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      )
+                    ]
+                  : null,
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
   Widget _buildSuccessMessage(QuizProvider quizProvider) {
     final isCorrect = quizProvider.isCorrect;
     if (isCorrect) {
@@ -200,15 +250,23 @@ class _StoryScreenState extends State<StoryScreen>
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         decoration: BoxDecoration(
           color: AppColors.success.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.success),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+              color: AppColors.success.withValues(alpha: 0.4), width: 1.5),
         ),
         child: Row(
           children: [
-            const Icon(
-              Icons.celebration_rounded,
-              color: AppColors.success,
-              size: 24,
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: const BoxDecoration(
+                color: AppColors.success,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.celebration_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -228,15 +286,23 @@ class _StoryScreenState extends State<StoryScreen>
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         decoration: BoxDecoration(
           color: AppColors.error.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.error),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+              color: AppColors.error.withValues(alpha: 0.4), width: 1.5),
         ),
         child: Row(
           children: [
-            const Icon(
-              Icons.sentiment_dissatisfied_rounded,
-              color: AppColors.error,
-              size: 24,
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: const BoxDecoration(
+                color: AppColors.error,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.refresh_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -257,19 +323,45 @@ class _StoryScreenState extends State<StoryScreen>
     if (storyProvider.isPlaying) {
       return Column(
         children: [
-          const SizedBox(height: 10),
-          Text(
-            'Pip is telling you the story...',
-            style: Theme.of(context).textTheme.bodyMedium,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.mint.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(AppColors.mint),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Pip is telling you the story...',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: AppColors.primaryDark,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 10),
-          TextButton(
+          const SizedBox(height: 12),
+          TextButton.icon(
             onPressed: storyProvider.stopStory,
-            child: Text(
-              'Stop',
-              style: TextStyle(
-                color: AppColors.error,
-                fontSize: 18,
+            icon: const Icon(Icons.stop_circle_outlined, size: 22),
+            label: const Text('Stop'),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.error,
+              textStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -279,9 +371,32 @@ class _StoryScreenState extends State<StoryScreen>
 
     return Column(
       children: [
-        ElevatedButton(
-          onPressed: storyProvider.playStory,
-          child: const Text('Read Me a Story'),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(32),
+            gradient: AppColors.primaryGradient,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.4),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: ElevatedButton.icon(
+            onPressed: storyProvider.playStory,
+            icon: const Icon(Icons.play_arrow_rounded, size: 24),
+            label: const Text('Read Me a Story'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 18),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(32),
+              ),
+            ),
+          ),
         ),
         const SizedBox(height: 12),
         OutlinedButton.icon(
@@ -309,107 +424,119 @@ class _StoryScreenState extends State<StoryScreen>
   }
 
   Widget _buildLoadingUI() {
-    return const Column(
-      children: [
-        CircularProgressIndicator(color: AppColors.primary),
-        SizedBox(height: 20),
-        Text('Loading your story...'),
-      ],
+    return Padding(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(
+            width: 56,
+            height: 56,
+            child: CircularProgressIndicator(
+              strokeWidth: 4,
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Loading your story...',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildErrorUI(String? message) {
-    return Column(
-      children: [
-        const Icon(
-          Icons.error_outline_rounded,
-          color: AppColors.error,
-          size: 48,
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Oops!',
-          style: Theme.of(context).textTheme.headlineMedium,
-        ),
-        const SizedBox(height: 12),
-        Text(
-          message ?? 'Something went wrong',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-        const SizedBox(height: 24),
-        if (message?.contains('TTS') == true || message?.contains('engine') == true)
-          OutlinedButton(
-            onPressed: () {
-              Provider.of<StoryProvider>(context, listen: false).skipToQuiz();
-            },
-            child: const Text('Skip to Quiz'),
-          )
-        else
-          ElevatedButton(
-            onPressed: () {
-              Provider.of<StoryProvider>(context, listen: false).retry();
-            },
-            child: const Text('Try Again'),
-          ),
-      ],
-    );
-  }
-
-  void _onCorrectAnswer() {
-    _showConfetti = true;
-    setState(() {});
-    _confetti.play();
-
-    final storyProvider = Provider.of<StoryProvider>(context, listen: false);
-    final quizProvider = Provider.of<QuizProvider>(context, listen: false);
-    if (!quizProvider.voicePlayed) {
-      storyProvider.tts.speakFeedback(true);
-      quizProvider.markVoicePlayed();
-    }
-
-    Future.delayed(const Duration(seconds: 2), () {
-      _showConfetti = false;
-      setState(() {});
-    });
-  }
-
-  Widget _buildQuizProgress(StoryProvider storyProvider) {
-    final total = storyProvider.quizzes.length;
-    final current = storyProvider.currentQuizIndex + 1;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        for (int i = 0; i < total; i++) ...[
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
           Container(
-            width: i + 1 <= current ? 28 : 12,
-            height: 12,
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: i + 1 <= current
-                  ? AppColors.primary
-                  : AppColors.primary.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(6),
+              color: AppColors.error.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.error_outline_rounded,
+              color: AppColors.error,
+              size: 48,
             ),
           ),
-          if (i != total - 1) const SizedBox(width: 6),
+          const SizedBox(height: 20),
+          Text(
+            'Oops!',
+            style: Theme.of(context).textTheme.displayMedium,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            message ?? 'Something went wrong',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+          const SizedBox(height: 24),
+          if (message?.contains('TTS') == true || message?.contains('engine') == true)
+            OutlinedButton(
+              onPressed: () {
+                Provider.of<StoryProvider>(context, listen: false).skipToQuiz();
+              },
+              child: const Text('Skip to Quiz'),
+            )
+          else
+            ElevatedButton.icon(
+              onPressed: () {
+                Provider.of<StoryProvider>(context, listen: false).retry();
+              },
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Try Again'),
+            ),
         ],
-      ],
+      ),
     );
   }
 
   Widget _buildNextButton(
       StoryProvider storyProvider, QuizProvider quizProvider) {
     final hasMore = storyProvider.hasMoreQuizzes;
-    return ElevatedButton(
-      onPressed: () {
-        if (hasMore) {
-          storyProvider.moveToNextQuiz();
-          quizProvider.resetForNewQuestion();
-        } else {
-          storyProvider.moveToNextQuiz();
-        }
-      },
-      child: Text(hasMore ? 'Next Question' : 'Finish'),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        gradient: AppColors.accentGradient,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.accent.withValues(alpha: 0.4),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: ElevatedButton.icon(
+        onPressed: () {
+          if (hasMore) {
+            storyProvider.moveToNextQuiz();
+            quizProvider.resetForNewQuestion();
+          } else {
+            storyProvider.moveToNextQuiz();
+          }
+        },
+        icon: Icon(
+          hasMore
+              ? Icons.arrow_forward_rounded
+              : Icons.flag_rounded,
+        ),
+        label: Text(hasMore ? 'Next Question' : 'Finish'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          foregroundColor: AppColors.inkDark,
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
+        ),
+      ),
     );
   }
 
@@ -442,15 +569,26 @@ class _StoryScreenState extends State<StoryScreen>
         _buildHeaderRow(BuddyMood.cheering),
         const SizedBox(height: 20),
         Container(
-          padding: const EdgeInsets.all(28),
+          padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: AppColors.success.withValues(alpha: 0.12),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppColors.accent, AppColors.coral],
+            ),
             shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.accent.withValues(alpha: 0.5),
+                blurRadius: 24,
+                spreadRadius: 4,
+              ),
+            ],
           ),
           child: const Icon(
             Icons.emoji_events_rounded,
-            color: AppColors.success,
-            size: 72,
+            color: Colors.white,
+            size: 64,
           ),
         ),
         const SizedBox(height: 20),
@@ -465,7 +603,7 @@ class _StoryScreenState extends State<StoryScreen>
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyLarge,
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(3, (i) {
@@ -500,24 +638,24 @@ class _StoryScreenState extends State<StoryScreen>
           ),
           child: Column(
             children: [
-              _scoreRow(
-                  'Score', '$score%', AppColors.primary, big: true),
+              _scoreRow('Score', '$score%', AppColors.primary, big: true),
               const SizedBox(height: 10),
-              _scoreRow('Correct answers', '$correct / $total',
-                  AppColors.success),
+              _scoreRow(
+                  'Correct answers', '$correct / $total', AppColors.success),
               const SizedBox(height: 6),
-              _scoreRow('First-try wins', '$firstTry / $total',
-                  AppColors.mint),
+              _scoreRow('First-try wins', '$firstTry / $total', AppColors.mint),
             ],
           ),
         ),
         const SizedBox(height: 28),
-        ElevatedButton(
+        ElevatedButton.icon(
           onPressed: () {
+            HapticFeedback.lightImpact();
             Provider.of<StoryProvider>(context, listen: false).loadInitial();
             Provider.of<QuizProvider>(context, listen: false).reset();
           },
-          child: const Text('Play Again'),
+          icon: const Icon(Icons.replay_rounded),
+          label: const Text('Play Again'),
         ),
       ],
     );
@@ -546,5 +684,16 @@ class _StoryScreenState extends State<StoryScreen>
         ),
       ],
     );
+  }
+
+  void _onCorrectAnswer() {
+    _showConfetti = true;
+    setState(() {});
+    _confetti.play();
+
+    Future.delayed(const Duration(seconds: 2), () {
+      _showConfetti = false;
+      setState(() {});
+    });
   }
 }
